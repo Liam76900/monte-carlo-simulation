@@ -1,7 +1,7 @@
-import yfinance as yf
 import numpy as np
 
-def dataloader(ticker):
-    data = yf.download(ticker, start="2020-01-01", end="2024-01-01")
-    prices = data["Adj Close"]
+def parameter_estimator(prices):
     returns = np.log(prices/prices.shift(1)).dropna()
+    mu = returns.mean() * 252
+    sigma = returns.std() * np.sqrt(252)
+    return mu, sigma
