@@ -30,7 +30,7 @@ Z = generating_shock(N, n_sim, antithetic=True)
 price_paths = simulate_gbm(S0, mu, sigma, T, dt, Z)
 final_prices = price_paths[-1]
 
-value_at_risk_5, expected_shortfall = compute_var_es(final_prices)
+value_at_risk_5, expected_shortfall = compute_var_es(final_prices, S0)
 
 theoretical = theoretical_mean(S0, mu, T)
 simulated = np.mean(final_prices)
