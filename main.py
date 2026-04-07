@@ -11,7 +11,8 @@ from option_pricing import price_european_call_mc
 from validation import theoretical_mean
 
 ticker="AAPL"
-data = yf.download(ticker, start="2020-01-01", end="2024-01-01")
+data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
+data.columns = data.columns.droplevel(1)
 prices = data["Adj Close"]
 
 mu, sigma = parameter_estimator(prices)
@@ -43,7 +44,7 @@ print("/nRisk Metrics:")
 print(f"Value at Risk (5%): {value_at_risk_5}")
 print(f"Expected Shortfall: {expected_shortfall}")
 
-print("/nValidation:")
+print("Validation:")
 print(f"Theoretical Mean: {theoretical}")
 print(f"Simulated Mean: {simulated}")
 
