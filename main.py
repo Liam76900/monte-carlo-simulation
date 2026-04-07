@@ -1,6 +1,7 @@
 import yfinance as yf
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from parameters import parameter_estimator
 from generating_shock import generating_shock
