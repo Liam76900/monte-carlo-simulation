@@ -9,6 +9,8 @@ from simulation_engine import simulate_gbm
 from risk_metrics import compute_var_es
 from option_pricing import price_european_call_mc
 from validation import theoretical_mean
+from discounted_payoff import discounted_payoffs
+from confidence_interval import confidence_interval
 
 ticker="AAPL"
 data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
@@ -37,6 +39,10 @@ simulated = np.mean(final_prices)
 
 option_price = price_european_call_mc(S0, K , r, sigma, T, dt, Z)
 
+discounted_payoff = discounted_payoffs(S0, K, r, sigma, T, dt, Z)
+
+(ci_lower, ci_upper) = confidence_interval(discounted_payoff)
+
 print("Paramters:")
 print(f"S0: {S0}, mu: {mu}, sigma: {sigma}")
 
@@ -50,6 +56,11 @@ print(f"Simulated Mean: {simulated}")
 
 print("Option Pricing:")
 print(f"Monte Carlo Call Price: {option_price}")
+
+print(f"Discounted Payoffs: {discounted_payoff[:10]}")
+
+print("Confidence Interval:")
+print(f"95% Confidence Interval:[{ci_lower:.4f}, {ci_upper:.4f}]")
 
 plt.plot(price_paths[:, :20])
 plt.title("Monte Carlo Simulated Paths")
