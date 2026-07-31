@@ -6,8 +6,10 @@ import pandas as pd
 from parameters import parameter_estimator
 from generating_shock import generating_shock
 from simulation_engine import simulate_gbm
-from risk_metrics import compute_var_es
+from simulated_var_es import compute_var_es
+from historical_var_es import compute_historical_var_es
 from option_pricing import price_european_call_mc
+from black_scholes_call import black_scholes_call
 from validation import theoretical_mean
 from discounted_payoff import discounted_payoffs
 from confidence_interval import confidence_interval
@@ -16,16 +18,21 @@ ticker="AAPL"
 data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
 data.columns = data.columns.droplevel(1)
 prices = data["Adj Close"]
+historical_returns = data['Close'].pct_change().dropna().values
 
 mu, sigma = parameter_estimator(prices)
 S0 = prices.iloc[-1]
 
 T = 1
+n_steps=252
 dt = 1/252
 N = int(T / dt)
 n_sim = 100000
 r = 0.03
 K = S0
+theoretical_price = black_scholes_call(S0=100, K=100, r=0.05, sigma=0.2, T=1)
+path_counts = [100, 500, 1000, 5000, 10000, 50000, 100000]
+means, ci_lowers, ci_uppers = [], [], []
 
 Z = generating_shock(N, n_sim, antithetic=True)
 
@@ -41,14 +48,19 @@ option_price = price_european_call_mc(S0, K , r, sigma, T, dt, Z)
 
 discounted_payoff = discounted_payoffs(S0, K, r, sigma, T, dt, Z)
 
-(ci_lower, ci_upper) = confidence_interval(discounted_payoff)
+mean, (ci_lower, ci_upper) = confidence_interval(discounted_payoff)
 
 print("Paramters:")
 print(f"S0: {S0}, mu: {mu}, sigma: {sigma}")
 
-print("Risk Metrics:")
-print(f"Value at Risk (5%): {value_at_risk_5}")
-print(f"Expected Shortfall: {expected_shortfall}")
+# Monte Carlo
+mc_var, mc_es = compute_var_es(final_prices, S0, alpha=5)
+
+# Historical
+hist_var, hist_es = compute_historical_var_es(historical_returns, alpha=5)
+
+print(f"Monte Carlo VaR (95%): {mc_var:.4f}, ES: {mc_es:.4f}")
+print(f"Historical VaR (95%):  {hist_var:.4f}, ES: {hist_es:.4f}")
 
 print("Validation:")
 print(f"Theoretical Mean: {theoretical}")
@@ -70,4 +82,45 @@ plt.show()
 
 plt.hist(final_prices, bins=50)
 plt.title("Final Price Distribution")
+plt.show()
+
+labels = ['VaR (95%)', 'Expected Shortfall (95%)']
+historical_values = [hist_var, hist_es]
+mc_values = [mc_var, mc_es]
+
+x = np.arange(len(labels))
+width = 0.35
+
+fig, ax = plt.subplots(figsize=(7,5))
+ax.bar(x - width/2, historical_values, width, label='Historical', color='steelblue')
+ax.bar(x + width/2, mc_values, width, label='Monte Carlo', color='darkorange')
+
+ax.set_ylabel('Loss (as % of value)')
+ax.set_title('Historical vs Monte Carlo: VaR and Expected Shortfall')
+ax.set_xticks(x)
+ax.set_xticklabels(labels)
+ax.legend()
+
+plt.tight_layout()
+plt.show()
+
+for n in path_counts:
+    Z = np.random.standard_normal((n_steps, n))
+    dp = discounted_payoffs(S0, K, r, sigma, T, dt, Z)
+    mean, (lo, hi) = confidence_interval(dp, alpha=0.05)
+    means.append(mean)
+    ci_lowers.append(lo)
+    ci_uppers.append(hi)
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8,5))
+plt.plot(path_counts, means, marker='o', label='MC price')
+plt.fill_between(path_counts, ci_lowers, ci_uppers, alpha=0.2, label='95% CI')
+plt.axhline(theoretical_price, color='red', linestyle='--', label='Theoretical price')
+plt.xscale('log')
+plt.xlabel('Number of paths (log scale)')
+plt.ylabel('Option price')
+plt.title('MC Price with Confidence Interval vs Path Count')
+plt.legend()
 plt.show()
