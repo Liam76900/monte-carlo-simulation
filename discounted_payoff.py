@@ -1,9 +1,8 @@
 import numpy as np
+from simulation_engine import simulate_gbm
 
 def discounted_payoffs(S0, K, r, sigma, T, dt, Z):
-    drift = (r - 0.5 * sigma**2) * dt
-    log_returns = drift + sigma * np.sqrt(dt) * Z
-    paths = S0 * np.exp(np.cumsum(log_returns, axis=0))
+    paths = simulate_gbm(S0, r, sigma, T, dt, Z)
     payoff = np.maximum(paths[-1] - K, 0)
     discounted_payoff = np.exp(-r * T) * payoff
     return discounted_payoff

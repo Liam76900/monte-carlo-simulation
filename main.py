@@ -26,11 +26,11 @@ S0 = prices.iloc[-1]
 T = 1
 n_steps=252
 dt = 1/252
-N = int(T / dt)
+N = 252
 n_sim = 100000
 r = 0.03
 K = S0
-theoretical_price = black_scholes_call(S0=100, K=100, r=0.05, sigma=0.2, T=1)
+theoretical_price = black_scholes_call(S0, K, r, sigma, T)
 path_counts = [100, 500, 1000, 5000, 10000, 50000, 100000]
 means, ci_lowers, ci_uppers = [], [], []
 
@@ -50,11 +50,16 @@ discounted_payoff = discounted_payoffs(S0, K, r, sigma, T, dt, Z)
 
 mean, (ci_lower, ci_upper) = confidence_interval(discounted_payoff)
 
+T_var = 1/252
+Z_var = generating_shock(1, n_sim, antithetic=True)
+price_paths_var = simulate_gbm(S0, mu, sigma, T_var, dt, Z_var)
+final_prices_var = price_paths_var[-1]
+
 print("Paramters:")
 print(f"S0: {S0}, mu: {mu}, sigma: {sigma}")
 
 # Monte Carlo
-mc_var, mc_es = compute_var_es(final_prices, S0, alpha=5)
+mc_var, mc_es = compute_var_es(final_prices_var, S0, alpha=5)
 
 # Historical
 hist_var, hist_es = compute_historical_var_es(historical_returns, alpha=5)
@@ -68,6 +73,8 @@ print(f"Simulated Mean: {simulated}")
 
 print("Option Pricing:")
 print(f"Monte Carlo Call Price: {option_price}")
+print(f"Theoretical (Black-Scholes) Call Price: {theoretical_price:.4f}")
+print(f"Difference: {abs(option_price - theoretical_price):.4f}")
 
 print(f"Discounted Payoffs: {discounted_payoff[:10]}")
 
@@ -78,10 +85,12 @@ plt.plot(price_paths[:, :20])
 plt.title("Monte Carlo Simulated Paths")
 plt.xlabel("Time Steps")
 plt.ylabel("Price")
+plt.savefig("price_paths.png", dpi=150, bbox_inches='tight')
 plt.show()
 
 plt.hist(final_prices, bins=50)
 plt.title("Final Price Distribution")
+plt.savefig("final_price_distribution.png", dpi=150, bbox_inches='tight')
 plt.show()
 
 labels = ['VaR (95%)', 'Expected Shortfall (95%)']
@@ -102,6 +111,7 @@ ax.set_xticklabels(labels)
 ax.legend()
 
 plt.tight_layout()
+plt.savefig("var_comparison.png", dpi=150, bbox_inches='tight')
 plt.show()
 
 for n in path_counts:
@@ -123,4 +133,5 @@ plt.xlabel('Number of paths (log scale)')
 plt.ylabel('Option price')
 plt.title('MC Price with Confidence Interval vs Path Count')
 plt.legend()
+plt.savefig("convergence_plot.png", dpi=150, bbox_inches='tight')
 plt.show()
