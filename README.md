@@ -104,8 +104,8 @@ This takes any array of simulated values and returns the mean plus its confidenc
 9. Meauring Risk- simulated_var_es.py and historical_var_es.py
 Here this ansers another question: "if you hold this stock, how much could you lose?"
 
--Value at Risk(VaR): the loss threshold you should not expect to exceed most of the time (e.g. 95% of the time)
--Expected shortfall(ES): if a loss does exceed VaR, what is the average loss in those worst-case scenarios? ES captures tail risk that VaR alone can miss.
+- Value at Risk(VaR): the loss threshold you should not expect to exceed most of the time (e.g. 95% of the time)
+- Expected shortfall(ES): if a loss does exceed VaR, what is the average loss in those worst-case scenarios? ES captures tail risk that VaR alone can miss.
 This is computed in two ways:
 From the simulation:
 ```python
@@ -155,36 +155,36 @@ monte-carlo-simulation/
 
 ### Parameter Estimation (parameters.py)
 
--Estimates annualised drift (mu) and volatility (sigma) from real historical AAPL price data
+- Estimates annualised drift (mu) and volatility (sigma) from real historical AAPL price data
 
 ### Simulation Engine (generating_shock.py, simulation_engine.py)
 
--Random shock generation with antithetic variates (variance reduction)
--GBM-based path simulation, reused by every downstream calculation
+- Random shock generation with antithetic variates (variance reduction)
+- GBM-based path simulation, reused by every downstream calculation
 
 ### Option Pricing (discounted_payoff.py, option_pricing.py, black_scholes_call.py)
 
--Monte Carlo pricing of a European call option
--Closed-form Black-Scholes price for direct comparison
+- Monte Carlo pricing of a European call option
+- Closed-form Black-Scholes price for direct comparison
 
 ### Validation (validation.py, confidence_interval.py)
 
--theoretical_mean: checks the simulation engine's statistical behaviour, independent of option pricing
--Confidence intervals on the Monte Carlo price estimate
--Convergence plot: MC price (with shaded 95% CI) vs. number of simulated paths, benchmarked against the theoretical Black-Scholes price
+- theoretical_mean: checks the simulation engine's statistical behaviour, independent of option pricing
+- Confidence intervals on the Monte Carlo price estimate
+- Convergence plot: MC price (with shaded 95% CI) vs. number of simulated paths, benchmarked against the theoretical Black-Scholes price
 
 ### Risk Metrics (simulated_var_es.py, historical_var_es.py)
 
--Monte Carlo VaR and Expected Shortfall (1-day horizon, from simulation)
--Historical VaR and Expected Shortfall (1-day horizon, from real AAPL returns)
--Bar chart comparing both, at matching time horizons
+- Monte Carlo VaR and Expected Shortfall (1-day horizon, from simulation)
+- Historical VaR and Expected Shortfall (1-day horizon, from real AAPL returns)
+- Bar chart comparing both, at matching time horizons
 
 ### Visualisations
 
--Simulated price paths over the option's 1-year horizon
--Histogram of final simulated prices (lognormal distribution)
--Convergence plot with shrinking confidence interval band
--Historical vs. Monte Carlo VaR/ES comparison bar chart
+- Simulated price paths over the option's 1-year horizon
+- Histogram of final simulated prices (lognormal distribution)
+- Convergence plot with shrinking confidence interval band
+- Historical vs. Monte Carlo VaR/ES comparison bar chart
 
 ## Mathematical Background
 
@@ -256,6 +256,6 @@ Historical vs. Monte Carlo VaR/ES — bar chart comparing both metrics at a matc
 
 ## Lessons Learned (bugs found and fixed during development)
 
--Drift confusion (mu vs r): early versions accidentally mixed up the real-world drift (mu) and the risk-free rate (r). Simulating realistic price behavior requires mu; pricing an option requires r for the result to be theoretically valid. Using the wrong one in either place causes systematic mispricing.
--Hardcoded comparison parameters: the theoretical price was initially computed with hardcoded placeholder values (S0=100, K=100, sigma=0.2) instead of the actual estimated parameters, making the convergence plot's benchmark line meaningless. Fixed by passing the same real S0, K, r, sigma into both the Monte Carlo and Black-Scholes calculations.
--Time horizon mismatch in VaR comparison: historical returns are daily, but the first Monte Carlo VaR used a full year of simulated growth — comparing a 1-day risk figure against a 1-year one produced wildly different (and meaningless) results. Fixed by running a separate, short (1-day) simulation specifically for the VaR comparison, kept independent from the 1-year simulation used for option pricing.
+- Drift confusion (mu vs r): early versions accidentally mixed up the real-world drift (mu) and the risk-free rate (r). Simulating realistic price behavior requires mu; pricing an option requires r for the result to be theoretically valid. Using the wrong one in either place causes systematic mispricing.
+- Hardcoded comparison parameters: the theoretical price was initially computed with hardcoded placeholder values (S0=100, K=100, sigma=0.2) instead of the actual estimated parameters, making the convergence plot's benchmark line meaningless. Fixed by passing the same real S0, K, r, sigma into both the Monte Carlo and Black-Scholes calculations.
+- Time horizon mismatch in VaR comparison: historical returns are daily, but the first Monte Carlo VaR used a full year of simulated growth — comparing a 1-day risk figure against a 1-year one produced wildly different (and meaningless) results. Fixed by running a separate, short (1-day) simulation specifically for the VaR comparison, kept independent from the 1-year simulation used for option pricing.
