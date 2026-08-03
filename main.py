@@ -3,16 +3,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from parameters import parameter_estimator
-from generating_shock import generating_shock
-from simulation_engine import simulate_gbm
-from simulated_var_es import compute_var_es
-from historical_var_es import compute_historical_var_es
-from option_pricing import price_european_call_mc
-from black_scholes_call import black_scholes_call
-from validation import theoretical_mean
-from discounted_payoff import discounted_payoffs
-from confidence_interval import confidence_interval
+import sys
+sys.path.append('src')
+
+from src.parameters import parameter_estimator
+from src.generating_shock import generating_shock
+from src.simulation_engine import simulate_gbm
+from src.simulated_var_es import compute_var_es
+from src.historical_var_es import compute_historical_var_es
+from src.option_pricing import price_european_call_mc
+from src.black_scholes_call import black_scholes_call
+from src.validation import theoretical_mean
+from src.discounted_payoff import discounted_payoffs
+from src.confidence_interval import confidence_interval
 
 ticker="AAPL"
 data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
