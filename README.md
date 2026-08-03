@@ -242,16 +242,16 @@ This downloads AAPL historical data, estimates model parameters, runs the Monte 
 
 ## Validation & Results
 
-1. ![Simulated Price Paths](price_paths.png)
+1. ![Simulated Price Paths](outputs/price_paths.png)
 Simulated price paths — 20 sample paths shown over the option's 1-year horizon, starting from AAPL's actual last price. Paths fan out over time as uncertainty compounds, as expected under GBM.
 
-2. ![Final Price Distribution](final_price_distribution.png)
+2. ![Final Price Distribution](outputs/final_price_distribution.png)
 Final price distribution — a histogram of all simulated final prices, correctly right-skewed (lognormal), never going negative — the expected shape under GBM.
 
-3. ![Convergence Plot](convergence_plot.png)
+3. ![Convergence Plot](outputs/convergence_plot.png)
 Convergence plot — Monte Carlo option price plotted against number of simulated paths (log scale), with a shaded 95% CI band, benchmarked against the theoretical Black-Scholes price. The MC price converges onto the theoretical price by ~5,000-10,000 paths, and the CI band visibly narrows as paths increase — direct evidence the pricing pipeline is correct.
 
-4. ![Historical vs Monte Carlo VaR](var_comparison.png)
+4. ![Historical vs Monte Carlo VaR](outputs/var_comparison.png)
 Historical vs. Monte Carlo VaR/ES — bar chart comparing both metrics at a matching 1-day horizon. Historical (~3.2% VaR) and Monte Carlo (~3.4% VaR) land close together, with Monte Carlo slightly higher — indicating the GBM model's risk estimate is a reasonable, if slightly more conservative, approximation of AAPL's real historical risk.
 
 ## Lessons Learned (bugs found and fixed during development)
