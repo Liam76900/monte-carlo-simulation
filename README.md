@@ -127,6 +127,30 @@ Critical detail: both need to measure the same time horizon to be comparable. Hi
 
 If the historical and Monte Carlo VaR/ES values land close together, it's evidence that the GBM model's assumptions (constant volatility, normally distributed daily returns) are a reasonable approximation of how AAPL actually behaves.
 
+## Project Structure
+
+monte-carlo-simulation/
+├── src/
+│   ├── parameters.py             # Estimates mu, sigma from historical prices
+│   ├── generating_shock.py        # Generates random shocks (with antithetic variates)
+│   ├── simulation_engine.py         # simulate_gbm — the core path simulation
+│   ├── discounted_payoff.py           # Discounted option payoffs from simulated paths
+│   ├── option_pricing.py                # price_european_call_mc — averages discounted payoffs
+│   ├── black_scholes_call.py              # Closed-form theoretical option price
+│   ├── confidence_interval.py               # CI for any array of Monte Carlo values
+│   ├── validation.py                          # theoretical_mean — validates the simulation engine
+│   ├── simulated_var_es.py                      # VaR/ES from simulated final prices
+│   └── historical_var_es.py                       # VaR/ES from real historical returns
+├── outputs/
+│   ├── price_paths.png
+│   ├── final_price_distribution.png
+│   ├── convergence_plot.png
+│   └── var_comparison.png
+├── main.py                             # Runs the full pipeline end-to-end
+├── requirements.txt
+├── .gitignore
+└── README.md
+
 ## Features
 
 ### Parameter Estimation (parameters.py)
@@ -162,6 +186,46 @@ If the historical and Monte Carlo VaR/ES values land close together, it's eviden
 -Convergence plot with shrinking confidence interval band
 -Historical vs. Monte Carlo VaR/ES comparison bar chart
 
+## Mathematical Background
+
+### Asset price process (Geometric Brownian Motion):
+
+dS_t = μ S_t dt + σ S_t dW_t
+
+Discrete-time simulation formula (log-price):
+
+### log(S_t) = log(S_0) + (μ - 0.5σ²)t + σ√t · Z,   Z ~ N(0,1)
+
+### Option price (risk-neutral discounted expectation):
+
+Price = e^(-rT) · E[max(S_T - K, 0)]
+
+### Expected price under GBM (used for engine validation):
+
+E[S_T] = S0 · e^(μT)
+
+### Confidence interval on a Monte Carlo estimate:
+
+CI = mean ± z · (std / √n)
+
+## Example Output
+
+Paramters:
+S0: 190.3750762939453, mu: 0.2426480991324528, sigma: 0.3355336764080089
+Monte Carlo VaR (95%): 0.0334, ES: 0.0019
+Historical VaR (95%):  0.0324, ES: 0.0014
+Validation:
+Theoretical Mean: 242.65588075530093
+Simulated Mean: 242.81530776772402
+Option Pricing:
+Monte Carlo Call Price: 28.161997863127183
+Theoretical (Black-Scholes) Call Price: 27.9016
+Difference: 0.2604
+Discounted Payoffs: [ 82.55561408   0.           0.          49.51660918 141.34888109
+   0.          32.63762283  20.86969024   0.          40.79647784]
+Confidence Interval:
+95% Confidence Interval:[27.8664, 28.4576]
+
 ## Installation
 ```bash
 git clone <your-repo-url>
@@ -189,3 +253,9 @@ Convergence plot — Monte Carlo option price plotted against number of simulate
 
 4. ![Historical vs Monte Carlo VaR](var_comparison.png)
 Historical vs. Monte Carlo VaR/ES — bar chart comparing both metrics at a matching 1-day horizon. Historical (~3.2% VaR) and Monte Carlo (~3.4% VaR) land close together, with Monte Carlo slightly higher — indicating the GBM model's risk estimate is a reasonable, if slightly more conservative, approximation of AAPL's real historical risk.
+
+## Lessons Learned (bugs found and fixed during development)
+
+-Drift confusion (mu vs r): early versions accidentally mixed up the real-world drift (mu) and the risk-free rate (r). Simulating realistic price behavior requires mu; pricing an option requires r for the result to be theoretically valid. Using the wrong one in either place causes systematic mispricing.
+-Hardcoded comparison parameters: the theoretical price was initially computed with hardcoded placeholder values (S0=100, K=100, sigma=0.2) instead of the actual estimated parameters, making the convergence plot's benchmark line meaningless. Fixed by passing the same real S0, K, r, sigma into both the Monte Carlo and Black-Scholes calculations.
+-Time horizon mismatch in VaR comparison: historical returns are daily, but the first Monte Carlo VaR used a full year of simulated growth — comparing a 1-day risk figure against a 1-year one produced wildly different (and meaningless) results. Fixed by running a separate, short (1-day) simulation specifically for the VaR comparison, kept independent from the 1-year simulation used for option pricing.
