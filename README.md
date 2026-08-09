@@ -131,22 +131,24 @@ If the historical and Monte Carlo VaR/ES values land close together, it's eviden
 
 monte-carlo-simulation/
 ├── src/
-│   ├── parameters.py             # Estimates mu, sigma from historical prices
-│   ├── generating_shock.py        # Generates random shocks (with antithetic variates)
-│   ├── simulation_engine.py         # simulate_gbm — the core path simulation
-│   ├── discounted_payoff.py           # Discounted option payoffs from simulated paths
-│   ├── option_pricing.py                # price_european_call_mc — averages discounted payoffs
-│   ├── black_scholes_call.py              # Closed-form theoretical option price
-│   ├── confidence_interval.py               # CI for any array of Monte Carlo values
-│   ├── validation.py                          # theoretical_mean — validates the simulation engine
-│   ├── simulated_var_es.py                      # VaR/ES from simulated final prices
-│   └── historical_var_es.py                       # VaR/ES from real historical returns
+│   ├── parameters.py
+│   ├── generating_shock.py
+│   ├── simulation_engine.py
+│   ├── discounted_payoff.py
+│   ├── option_pricing.py
+│   ├── black_scholes_call.py
+│   ├── confidence_interval.py
+│   ├── validation.py
+│   ├── compute_delta.py
+│   ├── black_scholes_delta.py
+│   ├── simulated_var_es.py
+│   └── historical_var_es.py
 ├── outputs/
 │   ├── price_paths.png
 │   ├── final_price_distribution.png
 │   ├── convergence_plot.png
 │   └── var_comparison.png
-├── main.py                             # Runs the full pipeline end-to-end
+├── main.py
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -166,6 +168,7 @@ monte-carlo-simulation/
 
 - Monte Carlo pricing of a European call option
 - Closed-form Black-Scholes price for direct comparison
+- Delta (price sensitivity to the underlying) via finite-difference (bump-and-revalue) simulation, validated against the closed-form Black-Scholes Delta
 
 ### Validation (validation.py, confidence_interval.py)
 
@@ -208,23 +211,29 @@ E[S_T] = S0 · e^(μT)
 
 CI = mean ± z · (std / √n)
 
+### Delta (price sensitivity to the underlying), via finite difference:
+
+Delta ≈ [Price(S0(1+ε)) - Price(S0(1-ε))] / (2 · S0 · ε)
+
 ## Example Output
 
 Paramters:
-S0: 190.3750762939453, mu: 0.2426480991324528, sigma: 0.3355336764080089
-Monte Carlo VaR (95%): 0.0334, ES: 0.0019
-Historical VaR (95%):  0.0324, ES: 0.0014
+S0: 190.3750457763672, mu: 0.24264805893722605, sigma: 0.33553377319218686
+Monte Carlo VaR (95%): 0.0332, ES: 0.0418
+Historical VaR (95%):  0.0324, ES: 0.0469
 Validation:
-Theoretical Mean: 242.65588075530093
-Simulated Mean: 242.81530776772402
+Theoretical Mean: 242.65583210337894
+Simulated Mean: 242.59768448014495
 Option Pricing:
-Monte Carlo Call Price: 28.161997863127183
+Monte Carlo Call Price: 27.779190144443934
 Theoretical (Black-Scholes) Call Price: 27.9016
-Difference: 0.2604
-Discounted Payoffs: [ 82.55561408   0.           0.          49.51660918 141.34888109
-   0.          32.63762283  20.86969024   0.          40.79647784]
+Difference: 0.1224
+Discounted Payoffs: [ 0.          0.          0.          0.          0.         58.21393099
+  0.          0.         13.12005787  0.        ]
 Confidence Interval:
-95% Confidence Interval:[27.8664, 28.4576]
+95% Confidence Interval:[27.4858, 28.0726]
+Monte Carlo Delta: 0.6004
+Theoretical Delta: 0.6015
 
 ## Installation
 ```bash
