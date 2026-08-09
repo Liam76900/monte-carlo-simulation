@@ -16,6 +16,8 @@ from src.black_scholes_call import black_scholes_call
 from src.validation import theoretical_mean
 from src.discounted_payoff import discounted_payoffs
 from src.confidence_interval import confidence_interval
+from src.compute_delta import compute_delta
+from src.black_scholes_delta import black_scholes_delta
 
 ticker="AAPL"
 data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
@@ -53,6 +55,9 @@ discounted_payoff = discounted_payoffs(S0, K, r, sigma, T, dt, Z)
 
 mean, (ci_lower, ci_upper) = confidence_interval(discounted_payoff)
 
+mc_delta = compute_delta(S0, K, r, sigma, T, dt, Z)
+bs_delta = black_scholes_delta(S0, K, r, sigma, T)
+
 T_var = 1/252
 Z_var = generating_shock(1, n_sim, antithetic=True)
 price_paths_var = simulate_gbm(S0, mu, sigma, T_var, dt, Z_var)
@@ -83,6 +88,9 @@ print(f"Discounted Payoffs: {discounted_payoff[:10]}")
 
 print("Confidence Interval:")
 print(f"95% Confidence Interval:[{ci_lower:.4f}, {ci_upper:.4f}]")
+
+print(f"Monte Carlo Delta: {mc_delta:.4f}")
+print(f"Theoretical Delta: {bs_delta:.4f}")
 
 plt.plot(price_paths[:, :20])
 plt.title("Monte Carlo Simulated Paths")
