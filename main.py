@@ -18,6 +18,9 @@ from src.discounted_payoff import discounted_payoffs
 from src.confidence_interval import confidence_interval
 from src.compute_delta import compute_delta
 from src.black_scholes_delta import black_scholes_delta
+from src.fit_garch import fit_garch
+from src.compute_annualised_volatility import compute_annualised_volatility
+from src.forecast_volatility import forecast_volatility
 
 ticker="AAPL"
 data = yf.download(ticker, start="2020-01-01", end="2024-01-01", auto_adjust=False)
@@ -75,6 +78,11 @@ hist_var, hist_es = compute_historical_var_es(historical_returns, alpha=5)
 print(f"Monte Carlo VaR (95%): {mc_var:.4f}, ES: {mc_es:.4f}")
 print(f"Historical VaR (95%):  {hist_var:.4f}, ES: {hist_es:.4f}")
 
+# GARCH volatility analysis
+fitted_garch = fit_garch(historical_returns)
+garch_vol = compute_annualised_volatility(fitted_garch)
+garch_forecast = forecast_volatility(fitted_garch, horizon=10)
+
 print("Validation:")
 print(f"Theoretical Mean: {theoretical}")
 print(f"Simulated Mean: {simulated}")
@@ -91,6 +99,11 @@ print(f"95% Confidence Interval:[{ci_lower:.4f}, {ci_upper:.4f}]")
 
 print(f"Monte Carlo Delta: {mc_delta:.4f}")
 print(f"Theoretical Delta: {bs_delta:.4f}")
+
+print("GARCH Volatility Analysis:")
+print(f"GBM constant sigma: {sigma:.4f}")
+print(f"GARCH volatility range: {garch_vol.min():.4f} to {garch_vol.max():.4f}")
+print(f"GARCH 10-day forward forecast: {garch_forecast}")
 
 plt.plot(price_paths[:, :20])
 plt.title("Monte Carlo Simulated Paths")
@@ -145,4 +158,14 @@ plt.ylabel('Option price')
 plt.title('MC Price with Confidence Interval vs Path Count')
 plt.legend()
 plt.savefig("convergence_plot.png", dpi=150, bbox_inches='tight')
+plt.show()
+
+plt.figure(figsize=(10,5))
+plt.plot(garch_vol)
+plt.axhline(sigma, color='red', linestyle='--', label=f'Constant GBM sigma ({sigma:.4f})')
+plt.title('GARCH-Estimated Volatility Over Time vs. Constant GBM Assumption')
+plt.xlabel('Time')
+plt.ylabel('Annualised Volatility')
+plt.legend()
+plt.savefig('outputs/garch_volatility.png', dpi=150, bbox_inches='tight')
 plt.show()

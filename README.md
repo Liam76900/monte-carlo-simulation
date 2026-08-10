@@ -127,6 +127,19 @@ Critical detail: both need to measure the same time horizon to be comparable. Hi
 
 If the historical and Monte Carlo VaR/ES values land close together, it's evidence that the GBM model's assumptions (constant volatility, normally distributed daily returns) are a reasonable approximation of how AAPL actually behaves.
 
+10. Testing the constant-volatility assumption - fit_garch.py , compute_annualised_volatility.py , forecast_volatility.py
+Every calculation takes sigma as being a constant value, while in reality, volatility clusters. Where big price moves are usually followed by more big price moves, and calm periods tend to stay calm. A GARCH(1, 1) model is fit to the same historical returns to estimate how volatility actually varies day-to-day, rather than assuming it is constant
+
+```python
+def fit_garch(historical_returns):
+    returns_pct = historical_returns * 100
+    model = arch_model(returns_pct, vol='Garch', p=1, q=1, mean='Constant', dist='normal')
+    fitted = model.fit(disp='off')
+    return fitted
+```
+
+GARCH uses yesterday's volatility and the size of yesterday's price shock to find an estimate for today's volatility, where compute_annualised_volatility then annualises this volatility. The forecast_volatility function helps to project what the volatility will be like over the next horizon days and gradually reverts to a long-run average the further out it projects. This is then all taken and plotted against the constant sigma and shows exactly how much the constant-volatility assumption misses - see the GARCH volatility plot in Validation & Results.
+
 ## Project Structure
 
 monte-carlo-simulation/
@@ -142,12 +155,16 @@ monte-carlo-simulation/
 │   ├── compute_delta.py
 │   ├── black_scholes_delta.py
 │   ├── simulated_var_es.py
-│   └── historical_var_es.py
+│   ├── historical_var_es.py
+│   ├── fit_garch.py
+│   ├── compute_annualised_volatility.py
+│   └── forecast_volatility.py
 ├── outputs/
 │   ├── price_paths.png
 │   ├── final_price_distribution.png
 │   ├── convergence_plot.png
-│   └── var_comparison.png
+│   ├── var_comparison.png
+│   └── garch_volatility.png
 ├── main.py
 ├── requirements.txt
 ├── .gitignore
@@ -182,12 +199,19 @@ monte-carlo-simulation/
 - Historical VaR and Expected Shortfall (1-day horizon, from real AAPL returns)
 - Bar chart comparing both, at matching time horizons
 
+### Volatility Extension (fit_garch.py, compute_annualised_volatility.py, forecast_volatility.py)
+
+- GARCH(1,1) model fit to historical returns, estimating day-by-day volatility instead of assuming it's constant
+- 10-day forward volatility forecast
+- Direct comparison against the GBM model's constant sigma, quantifying how much the constant-volatility assumption misses
+
 ### Visualisations
 
 - Simulated price paths over the option's 1-year horizon
 - Histogram of final simulated prices (lognormal distribution)
 - Convergence plot with shrinking confidence interval band
 - Historical vs. Monte Carlo VaR/ES comparison bar chart
+- GARCH-estimated volatility over time vs. the constant GBM assumption
 
 ## Mathematical Background
 
@@ -218,22 +242,27 @@ Delta ≈ [Price(S0(1+ε)) - Price(S0(1-ε))] / (2 · S0 · ε)
 ## Example Output
 
 Paramters:
-S0: 190.3750457763672, mu: 0.24264805893722605, sigma: 0.33553377319218686
-Monte Carlo VaR (95%): 0.0332, ES: 0.0418
+S0: 190.3750762939453, mu: 0.24264807268506247, sigma: 0.3355335649137946
+Monte Carlo VaR (95%): 0.0335, ES: 0.0421
 Historical VaR (95%):  0.0324, ES: 0.0469
 Validation:
-Theoretical Mean: 242.65583210337894
-Simulated Mean: 242.59768448014495
+Theoretical Mean: 242.6558743376862
+Simulated Mean: 242.79241004040927
 Option Pricing:
-Monte Carlo Call Price: 27.779190144443934
+Monte Carlo Call Price: 28.096410887608847
 Theoretical (Black-Scholes) Call Price: 27.9016
-Difference: 0.1224
-Discounted Payoffs: [ 0.          0.          0.          0.          0.         58.21393099
-  0.          0.         13.12005787  0.        ]
+Difference: 0.1948
+Discounted Payoffs: [  0.          19.65415874   0.          58.49227184 112.78755688
+   0.           0.           0.           0.           0.        ]
 Confidence Interval:
-95% Confidence Interval:[27.4858, 28.0726]
-Monte Carlo Delta: 0.6004
+95% Confidence Interval:[27.8001, 28.3928]
+Monte Carlo Delta: 0.6040
 Theoretical Delta: 0.6015
+GARCH Volatility Analysis:
+GBM constant sigma: 0.3355
+GARCH volatility range: 0.1744 to 1.1583
+GARCH 10-day forward forecast: [0.17557774 0.18087852 0.18591625 0.19071418 0.1952923  0.19966792
+ 0.2038562  0.20787049 0.21172261 0.21542315]
 
 ## Installation
 ```bash
@@ -262,6 +291,9 @@ Convergence plot — Monte Carlo option price plotted against number of simulate
 
 4. ![Historical vs Monte Carlo VaR](outputs/var_comparison.png)
 Historical vs. Monte Carlo VaR/ES — bar chart comparing both metrics at a matching 1-day horizon. Historical (~3.2% VaR) and Monte Carlo (~3.4% VaR) land close together, with Monte Carlo slightly higher — indicating the GBM model's risk estimate is a reasonable, if slightly more conservative, approximation of AAPL's real historical risk.
+
+5. ![GARCH volatility vs. constant GBM assumption](outputs/garch_volatility.png)
+A GARCH(1, 1) model fit to the same historical returns and it shows that volatility ranged from 17.4% to 115.8% over the sample period, compared to the 33.6% figure assumed throughout the GBM simulation. The sharp early spike corresponds to the March 2020 market crash; several smaller spikes that indicate market stress, with volatility settling into a calmer state later in the sample. This, therefore, shows that the constant sigma faails to capture any of this variation, which is evidence of its limitation. Also shows how over the 10-day forecast the values increase from 17.6% to 21.5% reflecting a return toward typical volatility levels from the currently calmer regime
 
 ## Lessons Learned (bugs found and fixed during development)
 

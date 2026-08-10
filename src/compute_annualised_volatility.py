@@ -1,4 +1,4 @@
 import numpy as np
 
-def get_annualized_volatility(fitted):
+def compute_annualised_volatility(fitted):
     return fitted.conditional_volatility * np.sqrt(252) / 100
