@@ -289,22 +289,22 @@ This downloads AAPL historical data, estimates model parameters, runs the Monte 
 ## Validation & Results
 
 1. ![Simulated Price Paths](outputs/price_paths.png)
-Simulated price paths — 20 sample paths shown over the option's 1-year horizon, starting from AAPL's actual last price. Paths fan out over time as uncertainty compounds, as expected under GBM.
+Simulated price paths — 20 sample paths shown over the option's 1-year horizon, starting from AAPL's actual last price. Paths fan out over time as uncertainty compounds as you look further into the future.
 
 2. ![Final Price Distribution](outputs/final_price_distribution.png)
-Final price distribution — a histogram of all simulated final prices, correctly right-skewed (lognormal), never going negative — the expected shape under GBM.
+Final price distribution — a histogram of all simulated final prices, correctly right-skewed (lognormal), never going negative, as a stock price cannot become negative — the expected shape under GBM.
 
 3. ![Convergence Plot](outputs/convergence_plot.png)
-Convergence plot — Monte Carlo option price plotted against number of simulated paths (log scale), with a shaded 95% CI band, benchmarked against the theoretical Black-Scholes price. The MC price converges onto the theoretical price by ~5,000-10,000 paths, and the CI band visibly narrows as paths increase — direct evidence the pricing pipeline is correct.
+Convergence plot — Monte Carlo option price plotted against number of simulated paths with a shaded 95% CI band, benchmarked against the theoretical Black-Scholes price. The Monte Carlo price converges onto the theoretical price by ~5,000-10,000 paths, and the CI band visibly narrows as paths increase, which is direct evidence the pricing pipeline is correct.
 
 4. ![Historical vs Monte Carlo VaR](outputs/var_comparison.png)
-Historical vs. Monte Carlo VaR/ES — bar chart comparing both metrics at a matching 1-day horizon. Historical (~3.2% VaR) and Monte Carlo (~3.4% VaR) land close together, with Monte Carlo slightly higher — indicating the GBM model's risk estimate is a reasonable, if slightly more conservative, approximation of AAPL's real historical risk.
+Historical vs. Monte Carlo VaR/ES, where it shows a bar chart comparing both metrics at a matching 1-day horizon. Historical (~3.2% VaR) and Monte Carlo (~3.4% VaR) land close together, with Monte Carlo slightly higher which indicates that the GBM model's risk estimate is a reasonable and also acts as an approximation of AAPL's real historical risk.
 
 5. ![GARCH volatility vs. constant GBM assumption](outputs/garch_volatility.png)
-A GARCH(1, 1) model fit to the same historical returns and it shows that volatility ranged from 17.4% to 115.8% over the sample period, compared to the 33.6% figure assumed throughout the GBM simulation. The sharp early spike corresponds to the March 2020 market crash; several smaller spikes that indicate market stress, with volatility settling into a calmer state later in the sample. This, therefore, shows that the constant sigma faails to capture any of this variation, which is evidence of its limitation. Also shows how over the 10-day forecast the values increase from 17.6% to 21.5% reflecting a return toward typical volatility levels from the currently calmer regime
+A GARCH(1, 1) model fit to the same historical returns and it shows that volatility ranged from 17.4% to 115.8% over the sample period, compared to the 33.6% figure assumed throughout the GBM simulation. The sharp early spike corresponds to the March 2020 market crash and several smaller spikes indicates market stress, with volatility settling into a calmer state later in the sample. This, therefore, shows that the constant sigma fails to capture any of this variation, which is evidence of its limitation. Also shows how over the 10-day forecast the values increase from 17.6% to 21.5% reflecting a return toward typical volatility levels from the currently calmer regime.
 
 ## Lessons Learned (bugs found and fixed during development)
 
-- Drift confusion (mu vs r): early versions accidentally mixed up the real-world drift (mu) and the risk-free rate (r). Simulating realistic price behavior requires mu; pricing an option requires r for the result to be theoretically valid. Using the wrong one in either place causes systematic mispricing.
-- Hardcoded comparison parameters: the theoretical price was initially computed with hardcoded placeholder values (S0=100, K=100, sigma=0.2) instead of the actual estimated parameters, making the convergence plot's benchmark line meaningless. Fixed by passing the same real S0, K, r, sigma into both the Monte Carlo and Black-Scholes calculations.
-- Time horizon mismatch in VaR comparison: historical returns are daily, but the first Monte Carlo VaR used a full year of simulated growth — comparing a 1-day risk figure against a 1-year one produced wildly different (and meaningless) results. Fixed by running a separate, short (1-day) simulation specifically for the VaR comparison, kept independent from the 1-year simulation used for option pricing.
+- Drift confusion (mu vs r): early versions I had accidentally mixed up the real-world drift (mu) and the risk-free rate (r). Simulating realistic price behavior requires mu; pricing an option requires r for the result to be theoretically valid. Using the wrong one in either place causes systematic mispricing.
+- Hardcoded comparison parameters: the theoretical price was initially computed with hardcoded placeholder values (S0=100, K=100, sigma=0.2) instead of the actual estimated parameters which makes the convergence plot's benchmark line meaningless. Fixed by passing the same real S0, K, r, sigma into both the Monte Carlo and Black-Scholes calculations.
+- Time horizon mismatch in VaR comparison: historical returns are daily, but the first Monte Carlo VaR used a full year of simulated growth and comparing a 1-day risk figure against a 1-year one produced majorly different results. Fixed by running a separate, short 1-day simulation specifically for the VaR comparison and was kept independent from the 1-year simulation used for option pricing.
